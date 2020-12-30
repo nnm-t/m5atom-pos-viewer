@@ -4,7 +4,10 @@
 #include "TM1637Display.h"
 
 #include "matrix_number.h"
-#include "ble-pos-client.h"
+
+#include "ble-pos-viewer.h"
+#include "pos-num-characteristic-callbacks.h"
+#include "pos-price-characteristic-callbacks.h"
 
 namespace
 {
@@ -16,17 +19,12 @@ namespace
     BLEUUID num_characteristic_uuid(static_cast<uint16_t>(0x0000));
     BLEUUID price_characteristic_uuid(static_cast<uint16_t>(0x0001));
 
-    BLEPosClient ble_client("M5Atom-Pos-Viewer", service_uuid, num_characteristic_uuid, price_characteristic_uuid);
+    BLEPOSViewer ble_pos_viewer(service_uuid);
 
     uint8_t count = 0;
 
     TM1637Display tm1637(clock_pin, dio_pin);
 }
-
-
-bool do_connect = false;
-bool do_scan = false;
-bool is_connected = false;
 
 bool drawNumbers(const uint8_t number)
 {
@@ -52,7 +50,15 @@ void setup()
 {
     M5.begin(true, true, true);
 
-    ble_client.Begin();
+    // BLE Wrapper Class
+    ble_pos_viewer.Init("M5Atom-Pos-Viewer");
+    ble_pos_viewer.CreateCharacteristicRW<POSNumCharacteristicCallbacks>(num_characteristic_uuid);
+    ble_pos_viewer.CreateCharacteristicRW<POSPriceCharacteristicCallbacks>(price_characteristic_uuid);
+
+    ble_pos_viewer.Start();
+
+    BLEAdvertisementData advertisement_data;
+    ble_pos_viewer.StartAdvertising(advertisement_data);
 
     M5.dis.setBrightness(brightness);
     tm1637.setBrightness(brightness);
@@ -72,6 +78,4 @@ void loop()
 
         drawNumbers(count);
     }
-
-    ble_client.Update();
 }
