@@ -3,9 +3,9 @@
 #include "BLEDevice.h"
 #include "TM1637Display.h"
 
-#include "matrix_number.h"
-
 #include "ble-pos-viewer.h"
+#include "pos-price.h"
+#include "pos-num.h"
 #include "pos-num-characteristic-callbacks.h"
 #include "pos-price-characteristic-callbacks.h"
 
@@ -15,35 +15,15 @@ namespace
     constexpr uint8_t clock_pin = 32;
     constexpr uint8_t brightness = 10;
 
-    BLEUUID service_uuid(static_cast<uint16_t>(0xFFFF));
+    BLEUUID service_uuid("b8b4f6e7-8e73-4f07-949c-6b813af2c119");
     BLEUUID num_characteristic_uuid(static_cast<uint16_t>(0x0000));
     BLEUUID price_characteristic_uuid(static_cast<uint16_t>(0x0001));
 
     BLEPOSViewer ble_pos_viewer(service_uuid);
 
-    uint8_t count = 0;
-
     TM1637Display tm1637(clock_pin, dio_pin);
-}
-
-bool drawNumbers(const uint8_t number)
-{
-    if (number >= number_length)
-    {
-        return false;
-    }
-
-    for (uint8_t y = 0; y < led_rowcol; y++)
-    {
-        for (uint8_t x = 0; x < led_rowcol; x++)
-        {
-            M5.dis.drawpix(x + y * led_rowcol, matrix_numbers[number][y][x]);
-        }
-    }
-
-    tm1637.showNumberDec(number * 100);
-
-    return true;
+    POSPrice price(tm1637);
+    POSNum num;
 }
 
 void setup()
@@ -52,17 +32,17 @@ void setup()
 
     // BLE Wrapper Class
     ble_pos_viewer.Init("M5Atom-Pos-Viewer");
-    ble_pos_viewer.CreateCharacteristicRW<POSNumCharacteristicCallbacks>(num_characteristic_uuid);
-    ble_pos_viewer.CreateCharacteristicRW<POSPriceCharacteristicCallbacks>(price_characteristic_uuid);
-
+    ble_pos_viewer.CreateCharacteristicRW<POSNumCharacteristicCallbacks>(num_characteristic_uuid, &num);
+    ble_pos_viewer.CreateCharacteristicRW<POSPriceCharacteristicCallbacks>(price_characteristic_uuid, &price);
     ble_pos_viewer.Start();
 
     BLEAdvertisementData advertisement_data;
-    ble_pos_viewer.StartAdvertising(advertisement_data);
+    ble_pos_viewer.StartAdvertising(advertisement_data, service_uuid);
 
-    M5.dis.setBrightness(brightness);
-    tm1637.setBrightness(brightness);
-    drawNumbers(count);
+    num.SetBrightness(brightness);
+    num.Reset();
+    price.SetBrightness(brightness);
+    price.Reset();
 }
 
 void loop()
@@ -71,11 +51,12 @@ void loop()
 
     if (M5.Btn.wasPressed())
     {
-        if(++count >= number_length)
-        {
-            count = 0;
-        }
-
-        drawNumbers(count);
+        // Reset
+        num.Reset();
+        price.Reset();
     }
+
+    price.Update();
+
+    delay(100);
 }

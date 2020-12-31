@@ -22,7 +22,7 @@ public:
 
     void Start();
 
-    void StartAdvertising(BLEAdvertisementData& advertisement_data);
+    void StartAdvertising(BLEAdvertisementData& advertisement_data, BLEUUID& service_uuid);
 
     template <class T, class... Args> BLECharacteristic* const CreateCharacteristic(const BLEUUID& uuid, const uint32_t property, Args... args);
 
