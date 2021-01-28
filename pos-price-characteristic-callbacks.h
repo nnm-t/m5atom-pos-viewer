@@ -6,14 +6,16 @@
 #include "M5Atom.h"
 #include "BLEDevice.h"
 
+#include "pos-num.h"
 #include "pos-price.h"
 
 class POSPriceCharacteristicCallbacks : public BLECharacteristicCallbacks
 {
+    POSNum* _num;
     POSPrice* _price;
 
 public:
-    POSPriceCharacteristicCallbacks(POSPrice* price) : _price(price)
+    POSPriceCharacteristicCallbacks(POSNum* num, POSPrice* price) : _num(num), _price(price)
     {
 
     }

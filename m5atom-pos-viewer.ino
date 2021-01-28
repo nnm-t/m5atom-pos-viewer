@@ -17,7 +17,6 @@ namespace
 
     // UUID 16bit形式でないとESP32 BLE ClientでAdvertiseできない
     BLEUUID service_uuid(static_cast<uint16_t>(0xF6E7));
-    BLEUUID num_characteristic_uuid(static_cast<uint16_t>(0x0000));
     BLEUUID price_characteristic_uuid(static_cast<uint16_t>(0x0001));
 
     BLEPOSViewer ble_pos_viewer(service_uuid);
@@ -33,8 +32,7 @@ void setup()
 
     // BLE Wrapper Class
     ble_pos_viewer.Init("M5Atom-Pos-Viewer");
-    ble_pos_viewer.CreateCharacteristicRW<POSNumCharacteristicCallbacks>(num_characteristic_uuid, &num);
-    ble_pos_viewer.CreateCharacteristicRW<POSPriceCharacteristicCallbacks>(price_characteristic_uuid, &price);
+    ble_pos_viewer.CreateCharacteristicRW<POSPriceCharacteristicCallbacks>(price_characteristic_uuid, &num, &price);
     ble_pos_viewer.Start();
 
     BLEAdvertisementData advertisement_data;

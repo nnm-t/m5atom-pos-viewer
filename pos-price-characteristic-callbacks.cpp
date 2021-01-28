@@ -7,28 +7,32 @@ void POSPriceCharacteristicCallbacks::onRead(BLECharacteristic* pCharacteristic)
 
 void POSPriceCharacteristicCallbacks::onWrite(BLECharacteristic* pCharacteristic)
 {
-    // 2bytes
+    // 3bytes
     std::string value_str = pCharacteristic->getValue();
-    uint16_t value = 0;
+    uint16_t price = 0;
+    uint8_t num = 0;
 
-    if (value_str.length() < 1)
+    if (value_str.length() < 1 | value_str.length() > 3)
     {
         return;
     }
 
-    if (value_str.length() > 1)
+    num = static_cast<uint8_t>(value_str[0]);
+
+    if (value_str.length() == 3)
     {
-        value = (static_cast<uint16_t>(value_str[0]) << 8) + static_cast<uint8_t>(value_str[1]);
+        price = (static_cast<uint16_t>(value_str[1]) << 8) + static_cast<uint8_t>(value_str[2]);
     }
-    else
+    else if (value_str.length() == 2)
     {
-        value = static_cast<uint8_t>(value_str[0]);
+        price = static_cast<uint8_t>(value_str[1]);
     }
 
-    if (value > 9999 | value < 0)
+    if (price > 9999)
     {
-        value = 0;
+        price = 9999;
     }
 
-    _price->ShowNumberDec(value);
+    _num->DrawNumber(num);
+    _price->ShowNumberDec(price);
 }
